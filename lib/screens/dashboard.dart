@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_lamp/app_style.dart';
+import 'package:smart_lamp/screens/smart_light.dart';
 
 import '../size_config.dart';
 
@@ -13,6 +14,15 @@ class DashBoard extends StatefulWidget {
 
 class _DashBoardState extends State<DashBoard> {
   bool s1 = false;
+  String color_value = "Initial Value";
+
+  void _updates1(String newValue, bool newValue2) {
+    setState(() {
+      color_value = newValue;
+      s1 = newValue2;
+    });
+  }
+
   double nhietdo = 15;
   List<String> images = [
     "assets/images/light-64.png",
@@ -88,6 +98,12 @@ class _DashBoardState extends State<DashBoard> {
                   child: InkWell(
                     onTap: () {
                       print("1");
+                      if (index == 0) {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const SmartLight()));
+                      }
                     },
                     child: Stack(
                       children: [
@@ -122,24 +138,29 @@ class _DashBoardState extends State<DashBoard> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            "47" + "%",
-                                            style: GoogleFonts.ubuntu(
-                                              textStyle: const TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.grey,
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(top: 8.0),
+                                            child: Text(
+                                              "47" + "%",
+                                              style: GoogleFonts.ubuntu(
+                                                textStyle: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.grey,
+                                                ),
                                               ),
                                             ),
                                           ),
-                                          Container(
-                                            width: 25,
-                                            height: 25,
-                                            decoration: const BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: Colors.red,
+                                          if (s1 == true)
+                                            Container(
+                                              width: 25,
+                                              height: 25,
+                                              decoration: const BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: Colors.red,
+                                              ),
                                             ),
-                                          ),
                                         ],
                                       ),
                                     ),
@@ -154,13 +175,17 @@ class _DashBoardState extends State<DashBoard> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            "$nhietdo" + "°C",
-                                            style: GoogleFonts.ubuntu(
-                                              textStyle: const TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.grey,
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(top: 8.0),
+                                            child: Text(
+                                              "$nhietdo" + "°C",
+                                              style: GoogleFonts.ubuntu(
+                                                textStyle: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.grey,
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -196,13 +221,17 @@ class _DashBoardState extends State<DashBoard> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            "47" + "%",
-                                            style: GoogleFonts.ubuntu(
-                                              textStyle: const TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.grey,
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(top: 8.0),
+                                            child: Text(
+                                              "47" + "%",
+                                              style: GoogleFonts.ubuntu(
+                                                textStyle: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.grey,
+                                                ),
                                               ),
                                             ),
                                           ),

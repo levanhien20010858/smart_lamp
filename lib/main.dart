@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_lamp/screens/dashboard.dart';
+import 'utils.dart' as utils;
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  utils.preferences = await SharedPreferences.getInstance();
   runApp(const MyApp());
 }
 
