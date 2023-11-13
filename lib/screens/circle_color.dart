@@ -1,12 +1,15 @@
-import 'dart:convert';
-import 'dart:io';
-import "dart:math" as math;
-import 'dart:async';
-import 'package:flutter/material.dart';
+// ignore_for_file: invalid_use_of_visible_for_testing_member, unnecessary_null_comparison
 
-import '../../widgets/indicator.dart';
+import 'dart:convert';
+import "dart:math" as math;
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:smart_lamp/widgets/color_bloc.dart';
+import 'package:smart_lamp/widgets/light_bloc.dart';
+import 'package:smart_lamp/widgets/onoff_bloc.dart';
+import 'package:smart_lamp/widgets/nd.dart';
+
 import 'package:web_socket_channel/io.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class Wheel {
   static double vectorToHue(Offset vector) =>
@@ -40,16 +43,28 @@ class WheelPicker extends StatefulWidget {
 }
 
 class _WheelPickerState extends State<WheelPicker> {
-  final channel = IOWebSocketChannel.connect('ws://192.168.2.21:8765');
+  //'ws://10.20.215.102:8765'
+  String ip = 'ws://192.168.137.57:8765';
+
+  late IOWebSocketChannel channel;
+
   Map<String, dynamic> jsonData = {
     'leb': false,
-    'color': '#0xff2196f3',
+    'color': '0xff2196f3',
+    'bright': 100,
   };
+  @override
+  void initState() {
+    super.initState();
+    channel = IOWebSocketChannel.connect(ip);
+    jsonData['leb'] = context.read<ColorSmartBloc>().state;
+  }
+
   HSVColor get color => widget.color;
   // Hàm để cập nhật giá trị light
-  void updateLightValue(int newLightValue) {
+  void updateLightValue(bool newLightValue) {
     setState(() {
-      jsonData['light'] = newLightValue;
+      jsonData['leb'] = newLightValue;
     });
   }
 
@@ -57,6 +72,13 @@ class _WheelPickerState extends State<WheelPicker> {
   void updateColorValue(String newColorValue) {
     setState(() {
       jsonData['color'] = newColorValue;
+    });
+  }
+
+  // // Hàm để cập nhật giá trị bright
+  void updateBrightValue(double newColorValue) {
+    setState(() {
+      jsonData['bright'] = newColorValue;
     });
   }
 
@@ -105,11 +127,13 @@ class _WheelPickerState extends State<WheelPicker> {
 
     if (isWheel) {
       widget.onChanged(color.withHue(Wheel.vectorToHue(vector)));
-      String colorsmart = "#0x" + color.toColor().value.toRadixString(16);
-      // channel.sink.add(colorsmart);
+
+      String colorsmart = color.toColor().value.toRadixString(16);
+      print(color.toColor().value);
       updateColorValue(colorsmart);
       String jsonString = jsonEncode(jsonData);
       channel.sink.add(jsonString);
+      // print("ddd");
     }
     if (isPalette) {
       widget.onChanged(
@@ -124,84 +148,84 @@ class _WheelPickerState extends State<WheelPicker> {
   }
 
   void onPanDown(Offset offset) => isWheel = isPalette = false;
-  int onoff = 0;
+  bool onoff = false;
   @override
   Widget build(BuildContext context) {
+    ColorSmartBloc colorSmartBloc = BlocProvider.of<ColorSmartBloc>(context);
+    OnoffSmartBloc onoffSmartBloc = BlocProvider.of<OnoffSmartBloc>(context);
     return Transform.scale(
       scale: 0.9,
       child: Padding(
         padding: const EdgeInsets.all(14.0),
         child: LayoutBuilder(builder: (context, consts) {
           final size = consts.biggest;
-          final center = Offset(size.width / 2, size.height / 2);
-          final squareRadio =
-              _WheelPainter.squareRadio(_WheelPainter.radio(size * 1.1));
-          final indicatorX = Wheel.saturationToVector(
-            color.saturation,
-            squareRadio,
-            center.dx,
-          );
-          final indicatorY = Wheel.valueToVector(
-            color.value,
-            squareRadio,
-            center.dy,
-          );
-          return GestureDetector(
-            onPanStart: (details) => onPanStart(details.localPosition, size),
-            onPanUpdate: (details) => onPanUpdate(details.localPosition, size),
-            onPanDown: (details) => onPanDown(details.localPosition),
-            onPanEnd: (details) => setState(() => showIndicator = false),
-            child: Stack(
-              key: paletteKey,
-              children: [
-                Positioned.fill(
-                  child: CustomPaint(painter: _WheelPainter(color: color)),
-                ),
-                Positioned(
-                  top: size.height / 2 - 160 / 2,
-                  left: size.width / 2 - 160 / 2,
-                  child: InkWell(
-                    onTap: () {
-                      if (onoff == 0) {
-                        onoff = 1;
-                      } else {
-                        onoff = 0;
-                      }
-                      updateLightValue(onoff);
-                      String jsonString = jsonEncode(jsonData);
-                      channel.sink.add(jsonString);
-                    },
-                    child: Container(
-                      width: 160,
-                      height: 160,
-                      decoration: BoxDecoration(
-                        color: onoff == 0 ? Colors.black : color.toColor(),
-                        borderRadius: BorderRadius.circular(80),
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 5,
+
+          return BlocBuilder<LightBloc, double>(builder: (context, brightness) {
+            return GestureDetector(
+              onPanStart: (details) => onPanStart(details.localPosition, size),
+              onPanUpdate: (details) {
+                setState(() {
+                  if (channel.sink.done == null) {
+                    channel = IOWebSocketChannel.connect(ip);
+                  }
+                });
+
+                updateBrightValue(brightness);
+                onPanUpdate(details.localPosition, size);
+                colorSmartBloc.emit(color.toColor().value);
+              },
+              onPanDown: (details) => onPanDown(details.localPosition),
+              onPanEnd: (details) => setState(() => showIndicator = false),
+              child: Stack(
+                key: paletteKey,
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(painter: _WheelPainter(color: color)),
+                  ),
+                  BlocBuilder<OnoffSmartBloc, bool>(builder: (context, status) {
+                    return Positioned(
+                      top: size.height / 2 - 160 / 2,
+                      left: size.width / 2 - 160 / 2,
+                      child: InkWell(
+                        onTap: () {
+                          final channel = IOWebSocketChannel.connect(ip);
+
+                          // onoff = !onoff;
+                          updateLightValue(!status);
+                          onoffSmartBloc.emit(!status);
+
+                          String jsonString = jsonEncode(jsonData);
+                          channel.sink.add(jsonString);
+                        },
+                        child: Container(
+                          width: 160,
+                          height: 160,
+                          decoration: BoxDecoration(
+                            color: status == false
+                                ? Colors.black
+                                : color.toColor(),
+                            borderRadius: BorderRadius.circular(80),
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 5,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.lightbulb,
+                            color: Colors.white,
+                            size: 70,
+                          ),
                         ),
                       ),
-                      child: const Icon(
-                        Icons.lightbulb,
-                        color: Colors.white,
-                        size: 70,
-                      ),
-                    ),
-                  ),
-                )
-              ],
-            ),
-          );
+                    );
+                  })
+                ],
+              ),
+            );
+          });
         }),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    channel.sink.close();
-    super.dispose();
   }
 }
 
@@ -222,7 +246,7 @@ class _WheelPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     Offset center = Offset(size.width / 2, size.height / 2);
     double radio = _WheelPainter.radio(size * 1.1);
-    double squareRadio = _WheelPainter.squareRadio(radio);
+    // double squareRadio = _WheelPainter.squareRadio(radio);
 
     // Wheel
 
@@ -279,8 +303,6 @@ class _WheelPainter extends CustomPainter {
         ..color = Colors.white
         ..style = PaintingStyle.fill,
     );
-    Color colorchubiet = color.toColor();
-    print("$colorchubiet");
   }
 
   @override

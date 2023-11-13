@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_lamp/screens/dashboard.dart';
+import 'package:smart_lamp/widgets/color_bloc.dart';
+import 'package:smart_lamp/widgets/light_bloc.dart';
+import 'package:smart_lamp/widgets/nd.dart';
+import 'package:smart_lamp/widgets/onoff_bloc.dart';
 import 'utils.dart' as utils;
 
 void main() async {
@@ -12,12 +17,19 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: DashBoard(),
-      debugShowCheckedModeBanner: false,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => LightBloc()),
+        BlocProvider(create: (context) => ColorSmartBloc()),
+        BlocProvider(create: (context) => OnoffSmartBloc()),
+        BlocProvider(create: (context) => NDSmartBloc()),
+      ],
+      child: MaterialApp(
+        home: DashBoard(),
+        debugShowCheckedModeBanner: false,
+      ),
     );
   }
 }
